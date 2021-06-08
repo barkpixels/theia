@@ -86,12 +86,11 @@ export class MiniBrowserGuard {
             case 'Always Prevent':
                 this.setMiniBrowserPreference('mini-browser.previewFile.preventUnsecure', 'alwaysPrevent');
             case 'Prevent':
-            case undefined:
+            case undefined: // closed dialog
                 throw this.preventOpeningLocation(location);
             case 'Always Open':
-                this.setMiniBrowserPreference('mini-browser.previewFile.preventUnsecure', 'alwaysPrevent');
+                this.setMiniBrowserPreference('mini-browser.previewFile.preventUnsecure', 'alwaysOpen');
             case 'Open':
-                return;
         }
     }
 
