@@ -11,14 +11,14 @@
 // with the GNU Classpath Exception which is available at
 // https://www.gnu.org/software/classpath/license.html.
 //
-// SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
+// SPDX-License-Identifier: EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0
 // *****************************************************************************
 
 import { injectable, inject } from '@theia/core/shared/inversify';
 import { DisposableCollection } from '@theia/core';
 import { Message } from '@theia/core/shared/@phosphor/messaging';
 import * as React from '@theia/core/shared/react';
-import TextareaAutosize from 'react-autosize-textarea';
+import TextareaAutosize from 'react-textarea-autosize';
 import { ScmInput, ScmInputIssueType } from './scm-input';
 import {
     ContextMenuRenderer, ReactWidget, KeybindingRegistry, StatefulWidget
@@ -142,7 +142,8 @@ export class ScmCommitWidget extends ReactWidget implements StatefulWidget {
                 onChange={this.setInputValue}
                 ref={this.inputRef}
                 rows={1}
-                maxRows={6} /* from VS Code */>
+                maxRows={6} /* from VS Code */
+            >
             </TextareaAutosize>;
         return <div className={ScmCommitWidget.Styles.INPUT_MESSAGE_CONTAINER}>
             {textArea}

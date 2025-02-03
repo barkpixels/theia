@@ -11,7 +11,7 @@
 // with the GNU Classpath Exception which is available at
 // https://www.gnu.org/software/classpath/license.html.
 //
-// SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
+// SPDX-License-Identifier: EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0
 // *****************************************************************************
 
 import { injectable, inject, named } from 'inversify';
@@ -278,12 +278,12 @@ export class ShellLayoutRestorer implements CommandContribution {
                     });
                 }
                 return widgets;
-            } else if (isObject<Record<string, WidgetDescription>>(value) && !Array.isArray(value)) {
+            } else if (isObject(value) && !Array.isArray(value)) {
                 const copy: Record<string, unknown> = {};
                 for (const p in value) {
                     if (this.isWidgetProperty(p)) {
                         parseContext.push(async context => {
-                            copy[p] = await this.convertToWidget(value[p], context);
+                            copy[p] = await this.convertToWidget(value[p] as WidgetDescription, context);
                         });
                     } else {
                         copy[p] = value[p];

@@ -11,7 +11,7 @@
 // with the GNU Classpath Exception which is available at
 // https://www.gnu.org/software/classpath/license.html.
 //
-// SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
+// SPDX-License-Identifier: EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0
 // *****************************************************************************
 
 import * as http from 'http';
@@ -28,10 +28,10 @@ import { WsRequestValidatorContribution } from '../../node/ws-request-validators
 @injectable()
 export class ElectronTokenValidator implements WsRequestValidatorContribution {
 
-    protected electronSecurityToken: ElectronSecurityToken;
+    protected electronSecurityToken?: ElectronSecurityToken;
 
     @postConstruct()
-    protected postConstruct(): void {
+    protected init(): void {
         this.electronSecurityToken = this.getToken();
     }
 
@@ -43,6 +43,9 @@ export class ElectronTokenValidator implements WsRequestValidatorContribution {
      * Expects the token to be passed via cookies by default.
      */
     allowRequest(request: http.IncomingMessage): boolean {
+        if (!this.electronSecurityToken) {
+            return true;
+        }
         const cookieHeader = request.headers.cookie;
         if (isString(cookieHeader)) {
             const token = cookie.parse(cookieHeader)[ElectronSecurityToken];
@@ -76,8 +79,15 @@ export class ElectronTokenValidator implements WsRequestValidatorContribution {
     /**
      * Returns the token to compare to when authorizing requests.
      */
-    protected getToken(): ElectronSecurityToken {
-        return JSON.parse(process.env[ElectronSecurityToken]!);
+    protected getToken(): ElectronSecurityToken | undefined {
+        const token = process.env[ElectronSecurityToken];
+        if (token) {
+            return JSON.parse(token);
+        } else {
+            // No token has been passed to the backend server
+            // That indicates we're running without a local frontend
+            return undefined;
+        }
     }
 
 }

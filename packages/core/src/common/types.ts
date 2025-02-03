@@ -11,11 +11,13 @@
 // with the GNU Classpath Exception which is available at
 // https://www.gnu.org/software/classpath/license.html.
 //
-// SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
+// SPDX-License-Identifier: EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0
 // *****************************************************************************
 
 export { ArrayUtils } from './array-utils';
 export { Prioritizeable } from './prioritizeable';
+
+type UnknownObject<T extends object> = Record<string | number | symbol, unknown> & { [K in keyof T]: unknown };
 
 export type Deferred<T> = { [P in keyof T]: Promise<T[P]> };
 export type MaybeArray<T> = T | T[];
@@ -54,7 +56,24 @@ export function isFunction<T extends (...args: unknown[]) => unknown>(value: unk
     return typeof value === 'function';
 }
 
-export function isObject<T = Record<string | number | symbol, unknown>>(value: unknown): value is T {
+/**
+ * @returns whether the provided parameter is an empty JavaScript Object or not.
+ */
+export function isEmptyObject(obj: unknown): obj is object {
+    if (!isObject(obj)) {
+        return false;
+    }
+
+    for (const key in obj) {
+        if (Object.prototype.hasOwnProperty.call(obj, key)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+export function isObject<T extends object>(value: unknown): value is UnknownObject<T> {
     // eslint-disable-next-line no-null/no-null
     return typeof value === 'object' && value !== null;
 }
@@ -96,4 +115,26 @@ export function nullToUndefined<T>(nullable: MaybeNull<T>): MaybeUndefined<T> {
  */
 export function unreachable(_never: never, message: string = 'unhandled case'): never {
     throw new Error(message);
+}
+
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation and others. All rights reserved.
+ *  Licensed under the MIT License. See https://github.com/Microsoft/vscode/blob/master/LICENSE.txt for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+// Copied from https://github.com/microsoft/vscode/blob/1.72.2/src/vs/base/common/types.ts
+
+/**
+ * @returns whether the provided parameter is defined.
+ */
+export function isDefined<T>(arg: T | null | undefined): arg is T {
+    return !isUndefinedOrNull(arg);
+}
+
+/**
+ * @returns whether the provided parameter is undefined or null.
+ */
+export function isUndefinedOrNull(obj: unknown): obj is undefined | null {
+    // eslint-disable-next-line no-null/no-null
+    return (isUndefined(obj) || obj === null);
 }

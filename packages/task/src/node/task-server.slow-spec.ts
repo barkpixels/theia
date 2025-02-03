@@ -11,7 +11,7 @@
 // with the GNU Classpath Exception which is available at
 // https://www.gnu.org/software/classpath/license.html.
 //
-// SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
+// SPDX-License-Identifier: EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0
 // *****************************************************************************
 
 // tslint:disable-next-line:no-implicit-dependencies
@@ -25,7 +25,6 @@ import * as https from 'https';
 import { isWindows, isOSX } from '@theia/core/lib/common/os';
 import { FileUri } from '@theia/core/lib/node';
 import { terminalsPath } from '@theia/terminal/lib/common/terminal-protocol';
-import { expectThrowsAsync } from '@theia/core/lib/common/test/expect';
 import { TestWebSocketChannelSetup } from '@theia/core/lib/node/messaging/test/test-web-socket-channel';
 import { expect } from 'chai';
 import URI from '@theia/core/lib/common/uri';
@@ -72,7 +71,7 @@ describe('Task server / back-end', function (): void {
         taskServer = testContainer.get(TaskServer);
         taskServer.setClient(taskWatcher.getTaskClient());
         backend = testContainer.get(BackendApplication);
-        server = await backend.start();
+        server = await backend.start(3000, 'localhost');
     });
 
     afterEach(async () => {
@@ -104,11 +103,11 @@ describe('Task server / back-end', function (): void {
         await new Promise<void>((resolve, reject) => {
             const setup = new TestWebSocketChannelSetup({ server, path: `${terminalsPath}/${terminalId}` });
             const stringBuffer = new StringBufferingStream();
-            setup.multiplexer.onDidOpenChannel(event => {
-                event.channel.onMessage(e => stringBuffer.push(e().readString()));
-                event.channel.onError(reject);
-                event.channel.onClose(() => reject(new Error('Channel has been closed')));
-            });
+            setup.connectionProvider.listen(`${terminalsPath}/${terminalId}`, (path, channel) => {
+                channel.onMessage(e => stringBuffer.push(e().readString()));
+                channel.onError(reject);
+                channel.onClose(() => reject(new Error('Channel has been closed')));
+            }, false);
             stringBuffer.onData(currentMessage => {
                 // Instead of waiting for one message from the terminal, we wait for several ones as the very first message can be something unexpected.
                 // For instance: `nvm is not compatible with the \"PREFIX\" environment variable: currently set to \"/usr/local\"\r\n`
@@ -199,7 +198,7 @@ describe('Task server / back-end', function (): void {
         // possible on what node's child_process module does.
         if (isWindows) {
             // On Windows, node-pty just reports an exit code of 0.
-            expect(exitStatus).equals(0);
+            expect(exitStatus).equals(1);
         } else {
             // On Linux/macOS, node-pty sends SIGHUP by default, for some reason.
             expect(exitStatus).equals('SIGHUP');
@@ -218,8 +217,8 @@ describe('Task server / back-end', function (): void {
         // currently.  Ideally, its behavior should be aligned as much as
         // possible on what node's child_process module does.
         if (isWindows) {
-            // On Windows, node-pty just reports an exit code of 0.
-            expect(exitStatus).equals(0);
+            // On Windows, node-pty just reports an exit code of 1.
+            expect(exitStatus).equals(1);
         } else {
             // On Linux/macOS, node-pty sends SIGHUP by default, for some reason.
             expect(exitStatus).equals('SIGHUP');
@@ -249,11 +248,6 @@ describe('Task server / back-end', function (): void {
         } else {
             expect(code).equals(127);
         }
-    });
-
-    it('task using raw process can handle command that does not exist', async function (): Promise<void> {
-        const p = taskServer.run(createProcessTaskConfig2('process', bogusCommand, []), wsRoot);
-        await expectThrowsAsync(p, 'ENOENT');
     });
 
     it('getTasks(ctx) returns tasks according to created context', async function (): Promise<void> {

@@ -11,7 +11,7 @@
 // with the GNU Classpath Exception which is available at
 // https://www.gnu.org/software/classpath/license.html.
 //
-// SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
+// SPDX-License-Identifier: EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0
 // *****************************************************************************
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -23,6 +23,8 @@ import { Emitter, Event, Disposable, DisposableCollection, MaybePromise, isObjec
 import { KeyCode, KeysOrKeyCodes } from '../keyboard/keys';
 
 import PerfectScrollbar from 'perfect-scrollbar';
+import { PreviewableWidget } from '../widgets/previewable-widget';
+import { Slot } from '@phosphor/signaling';
 
 decorate(injectable(), Widget);
 decorate(unmanaged(), Widget, 0);
@@ -93,7 +95,7 @@ export namespace UnsafeWidgetUtilities {
 }
 
 @injectable()
-export class BaseWidget extends Widget {
+export class BaseWidget extends Widget implements PreviewableWidget {
 
     protected readonly onScrollYReachEndEmitter = new Emitter<void>();
     readonly onScrollYReachEnd: Event<void> = this.onScrollYReachEndEmitter.event;
@@ -114,6 +116,10 @@ export class BaseWidget extends Widget {
     protected readonly toDisposeOnDetach = new DisposableCollection();
     protected scrollBar?: PerfectScrollbar;
     protected scrollOptions?: PerfectScrollbar.Options;
+
+    constructor(@unmanaged() options?: Widget.IOptions) {
+        super(options);
+    }
 
     override dispose(): void {
         if (this.isDisposed) {
@@ -210,6 +216,10 @@ export class BaseWidget extends Widget {
 
     protected addClipboardListener<K extends 'cut' | 'copy' | 'paste'>(element: HTMLElement, type: K, listener: EventListenerOrEventListenerObject<K>): void {
         this.toDisposeOnDetach.push(addClipboardListener(element, type, listener));
+    }
+
+    getPreviewNode(): Node | undefined {
+        return this.node;
     }
 
     override setFlag(flag: Widget.Flag): void {
@@ -333,7 +343,7 @@ export function waitForRevealed(widget: Widget): Promise<void> {
  * Resolves when the given widget is hidden regardless of attachment.
  */
 export function waitForHidden(widget: Widget): Promise<void> {
-    return waitForVisible(widget, true);
+    return waitForVisible(widget, false);
 }
 
 function waitForVisible(widget: Widget, visible: boolean, attached?: boolean): Promise<void> {
@@ -355,27 +365,49 @@ function waitForVisible(widget: Widget, visible: boolean, attached?: boolean): P
     });
 }
 
+const pinnedTitles = new Map<Title<Widget>, [boolean, Slot<Widget, void>]>();
+
 export function isPinned(title: Title<Widget>): boolean {
     const pinnedState = !title.closable && title.className.includes(PINNED_CLASS);
     return pinnedState;
 }
 
-export function unpin(title: Title<Widget>): void {
-    title.closable = true;
-    title.className = title.className.replace(PINNED_CLASS, '').trim();
-}
-
 export function pin(title: Title<Widget>): void {
+    const l = () => {
+        pinnedTitles.delete(title);
+    };
+    pinnedTitles.set(title, [title.closable, l]);
+    title.owner.disposed.connect(l);
     title.closable = false;
     if (!title.className.includes(PINNED_CLASS)) {
         title.className += ` ${PINNED_CLASS}`;
     }
 }
 
+export function unpin(title: Title<Widget>): void {
+    const entry = pinnedTitles.get(title);
+    if (entry) {
+        title.owner.disposed.disconnect(entry[1]);
+        title.closable = entry[0];
+        pinnedTitles.delete(title);
+    } else {
+        title.closable = true;
+    }
+    title.className = title.className.replace(PINNED_CLASS, '').trim();
+}
+
+export function isLocked(title: Title<Widget>): boolean {
+    return title.className.includes(LOCKED_CLASS);
+}
+
 export function lock(title: Title<Widget>): void {
     if (!title.className.includes(LOCKED_CLASS)) {
         title.className += ` ${LOCKED_CLASS}`;
     }
+}
+
+export function unlock(title: Title<Widget>): void {
+    title.className = title.className.replace(LOCKED_CLASS, '').trim();
 }
 
 export function togglePinned(title?: Title<Widget>): void {

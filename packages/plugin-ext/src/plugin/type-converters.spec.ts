@@ -11,7 +11,7 @@
 // with the GNU Classpath Exception which is available at
 // https://www.gnu.org/software/classpath/license.html.
 //
-// SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
+// SPDX-License-Identifier: EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0
 // *****************************************************************************
 
 import * as assert from 'assert';
@@ -177,10 +177,10 @@ describe('Type converters:', () => {
     describe('convert tasks:', () => {
         const customType = 'custom';
         const shellType = 'shell';
-        const label = 'yarn build';
+        const label = 'npm run build';
         const source = 'source';
-        const command = 'yarn';
-        const commandLine = 'yarn run build';
+        const command = 'npm';
+        const commandLine = 'npm run build';
         const args = ['run', 'build'];
         const cwd = '/projects/theia';
         const additionalProperty = 'some property';
@@ -252,7 +252,7 @@ describe('Type converters:', () => {
             ...shellPluginTask, execution: {
                 command: {
                     quoting: types.ShellQuoting.Strong,
-                    value: 'yarn'
+                    value: 'npm'
                 },
                 args,
                 options: {

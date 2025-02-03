@@ -11,7 +11,7 @@
 // with the GNU Classpath Exception which is available at
 // https://www.gnu.org/software/classpath/license.html.
 //
-// SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
+// SPDX-License-Identifier: EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0
 // *****************************************************************************
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -25,6 +25,11 @@ export interface PreferenceSchema {
     [name: string]: any,
     scope?: 'application' | 'window' | 'resource' | PreferenceScope,
     overridable?: boolean;
+    /**
+     * The title of the preference schema.
+     * It is used in the preference UI to associate a localized group of preferences.
+     */
+    title?: string;
     properties: PreferenceSchemaProperties
 }
 export namespace PreferenceSchema {
@@ -75,6 +80,7 @@ export interface PreferenceSchemaProperty extends PreferenceItem {
     description?: string;
     markdownDescription?: string;
     scope?: 'application' | 'machine' | 'window' | 'resource' | 'language-overridable' | 'machine-overridable' | PreferenceScope;
+    tags?: string[];
 }
 
 export interface PreferenceDataProperty extends PreferenceItem {

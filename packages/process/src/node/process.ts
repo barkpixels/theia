@@ -11,7 +11,7 @@
 // with the GNU Classpath Exception which is available at
 // https://www.gnu.org/software/classpath/license.html.
 //
-// SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
+// SPDX-License-Identifier: EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0
 // *****************************************************************************
 
 import { injectable, unmanaged } from '@theia/core/shared/inversify';
@@ -86,10 +86,10 @@ export abstract class Process implements ManagedProcess {
     abstract readonly inputStream: Writable;
 
     constructor(
-        protected readonly processManager: ManagedProcessManager,
-        protected readonly logger: ILogger,
+        @unmanaged() protected readonly processManager: ManagedProcessManager,
+        @unmanaged() protected readonly logger: ILogger,
         @unmanaged() protected readonly type: ProcessType,
-        protected readonly options: ProcessOptions | ForkOptions
+        @unmanaged() protected readonly options: ProcessOptions | ForkOptions
     ) {
         this.id = this.processManager.register(this);
         this.initialCwd = options && options.options && 'cwd' in options.options && options.options['cwd'].toString() || __dirname;

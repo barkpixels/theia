@@ -11,7 +11,7 @@
 // with the GNU Classpath Exception which is available at
 // https://www.gnu.org/software/classpath/license.html.
 //
-// SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
+// SPDX-License-Identifier: EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0
 // *****************************************************************************
 
 import * as React from '@theia/core/shared/react';
@@ -161,6 +161,10 @@ export class DebugVariable extends ExpressionContainer {
         return this._value || this.variable.value;
     }
 
+    get readOnly(): boolean {
+        return this.variable.presentationHint?.attributes?.includes('readOnly') ?? false;
+    }
+
     override render(): React.ReactNode {
         const { type, value, name } = this;
         return <div className={this.variableClassName}>
@@ -234,12 +238,13 @@ export class DebugVariable extends ExpressionContainer {
     protected setNameRef = (nameRef: HTMLSpanElement | null) => this.nameRef = nameRef || undefined;
 
     async open(): Promise<void> {
-        if (!this.supportSetVariable) {
+        if (!this.supportSetVariable || this.readOnly) {
             return;
         }
         const input = new SingleTextInputDialog({
             title: nls.localize('theia/debug/debugVariableInput', 'Set {0} Value', this.name),
-            initialValue: this.value
+            initialValue: this.value,
+            placeholder: nls.localizeByDefault('Value')
         });
         const newValue = await input.open();
         if (newValue) {

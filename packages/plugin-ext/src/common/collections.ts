@@ -11,7 +11,7 @@
 // with the GNU Classpath Exception which is available at
 // https://www.gnu.org/software/classpath/license.html.
 //
-// SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
+// SPDX-License-Identifier: EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0
 // *****************************************************************************
 
 /*---------------------------------------------------------------------------------------------
@@ -35,3 +35,20 @@ export function diffSets<T>(before: Set<T>, after: Set<T>): { removed: T[]; adde
     }
     return { removed, added };
 }
+
+export function diffMaps<K, V>(before: Map<K, V>, after: Map<K, V>): { removed: V[]; added: V[] } {
+    const removed: V[] = [];
+    const added: V[] = [];
+    for (const [index, value] of before) {
+        if (!after.has(index)) {
+            removed.push(value);
+        }
+    }
+    for (const [index, value] of after) {
+        if (!before.has(index)) {
+            added.push(value);
+        }
+    }
+    return { removed, added };
+}
+
